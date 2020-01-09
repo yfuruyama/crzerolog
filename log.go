@@ -1,4 +1,4 @@
-package main
+package cloudrunlog
 
 import (
 	"fmt"
@@ -9,6 +9,13 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+)
+
+var (
+	// CallerSkipFrameCount is the number of stack frames to skip to find the caller.
+	CallerSkipFrameCount = 3
+
+	sourceLocationHook = &callerHook{}
 )
 
 func init() {
@@ -40,11 +47,11 @@ func init() {
 	}
 }
 
-type SourceLocationHook struct{}
+type callerHook struct{}
 
-func (h SourceLocationHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	var file, line, function string
-	if pc, filePath, lineNum, ok := runtime.Caller(3); ok {
+	if pc, filePath, lineNum, ok := runtime.Caller(CallerSkipFrameCount); ok {
 		if f := runtime.FuncForPC(pc); f != nil {
 			function = f.Name()
 		}
@@ -58,12 +65,13 @@ func (h SourceLocationHook) Run(e *zerolog.Event, level zerolog.Level, msg strin
 // TODO: Support handleFunc
 func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: platform-dependent
 		projectId := os.Getenv("PROJECT_ID")
 		traceContext := r.Header.Get("X-Cloud-Trace-Context")
 		traceID := strings.Split(traceContext, "/")[0]
 		trace := fmt.Sprintf("projects/%s/traces/%s", projectId, traceID)
 
-		l := rootLogger.With().Timestamp().Logger().Hook(SourceLocationHook{})
+		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 		l.UpdateContext(func(c zerolog.Context) zerolog.Context {
 			return c.Str("logging.googleapis.com/trace", trace)
 		})
