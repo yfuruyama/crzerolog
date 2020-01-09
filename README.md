@@ -1,5 +1,5 @@
-# cloudrunlog
+# crzerolog
 
-A zerolog-based logger for Cloud Run.
+Clour Run logging library based on rs/zerolog.
 
 

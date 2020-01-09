@@ -1,9 +1,9 @@
-package cloudrunlog
+package crzerolog
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -62,11 +62,16 @@ func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	e.Dict("logging.googleapis.com/sourceLocation", zerolog.Dict().Str("file", file).Str("line", line).Str("function", function))
 }
 
-// TODO: Support handleFunc
 func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: platform-dependent
-		projectId := os.Getenv("PROJECT_ID")
+		projectID, err := fetchProjectID()
+		if err != nil {
+			// TODO
+			r = r.WithContext(rootLogger.WithContext(r.Context()))
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		traceContext := r.Header.Get("X-Cloud-Trace-Context")
 		traceID := strings.Split(traceContext, "/")[0]
 		trace := fmt.Sprintf("projects/%s/traces/%s", projectId, traceID)
@@ -78,4 +83,26 @@ func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handle
 		r = r.WithContext(l.WithContext(r.Context()))
 		next.ServeHTTP(w, r)
 	})
+}
+
+func fetchProjectID() (string, error) {
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
+	req.Header.Add("Metadata-Flavor", "Google")
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

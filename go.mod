@@ -1,4 +1,4 @@
-module github.com/yfuruyama/cloudrunlog
+module github.com/yfuruyama/crzerolog
 
 go 1.13
 
