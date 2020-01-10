@@ -3,7 +3,9 @@ package crzerolog
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -15,7 +17,10 @@ var (
 	// CallerSkipFrameCount is the number of stack frames to skip to find the caller.
 	CallerSkipFrameCount = 3
 
+	projectID          string
 	sourceLocationHook = &callerHook{}
+	// TODO: test
+	traceContextRegExp = regexp.MustCompile(`([0-9a-fA-F]+)(/(\d+))?(?:;o=[01])?`)
 )
 
 func init() {
@@ -45,8 +50,17 @@ func init() {
 			return "DEFAULT"
 		}
 	}
+
+	// Fetch Project ID in initialization for better performance,
+	// rather than fetching it in every request.
+	id, err := fetchProjectID()
+	if err != nil {
+		log.Fatalf("Failed to fetch mandatory project ID: %v", err)
+	}
+	projectID = id
 }
 
+// callerHook implements zerolog.Hook interface.
 type callerHook struct{}
 
 func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
@@ -64,21 +78,28 @@ func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 
 func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		projectID, err := fetchProjectID()
-		if err != nil {
-			// TODO
-			r = r.WithContext(rootLogger.WithContext(r.Context()))
-			next.ServeHTTP(w, r)
-			return
+		matched := traceContextRegExp.FindStringSubmatch(r.Header.Get("X-Cloud-Trace-Context"))
+		if len(matched) < 3 {
 		}
+		traceID := matched[1]
+		if traceID == "" {
+		}
+		spanID := matched[2]
+		if spanID == "" {
+		}
+		// traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
+		// if traceID == "" {
+		// r = r.WithContext(l.WithContext(r.Context()))
+		// next.ServeHTTP(w, r)
+		// return
+		// }
 
-		traceContext := r.Header.Get("X-Cloud-Trace-Context")
-		traceID := strings.Split(traceContext, "/")[0]
-		trace := fmt.Sprintf("projects/%s/traces/%s", projectId, traceID)
+		trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
 		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 		l.UpdateContext(func(c zerolog.Context) zerolog.Context {
 			return c.Str("logging.googleapis.com/trace", trace)
+			return c.Str("logging.googleapis.com/spanId", spanID)
 		})
 		r = r.WithContext(l.WithContext(r.Context()))
 		next.ServeHTTP(w, r)
@@ -86,15 +107,14 @@ func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handle
 }
 
 func fetchProjectID() (string, error) {
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
-	req.Header.Add("Metadata-Flavor", "Google")
+	req, err := http.NewRequest("GET",
+		"http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := client.Do(req)
+	req.Header.Add("Metadata-Flavor", "Google")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
