@@ -13,8 +13,9 @@ import (
 
 func main() {
 	rootLogger := zerolog.New(os.Stdout)
+	middleware := crzerolog.InjectLogger(&rootLogger)
 
-	http.Handle("/", crzerolog.HandleWithLogger(&rootLogger, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/", middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := hlog.FromRequest(r)
 
 		logger.Info().Str("foo", "foo!").Msg("Hello structured log 1")
