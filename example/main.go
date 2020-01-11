@@ -18,9 +18,9 @@ func main() {
 	http.Handle("/", middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := hlog.FromRequest(r)
 
-		logger.Info().Str("foo", "foo!").Msg("Hello structured log 1")
-		logger.Warn().Str("bar", "bar!").Msg("Hello structured log 2")
-		logger.Error().Str("baz", "baz!").Msg("Hello structured log 3")
+		logger.Info().Msg("Hi")
+		logger.Warn().Str("foo", "bar").Msg("This is")
+		logger.Error().Int("num", 123).Msg("Structured Log")
 
 		fmt.Fprintf(w, "Hello\n")
 	})))

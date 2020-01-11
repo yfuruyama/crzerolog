@@ -1,4 +1,4 @@
-// Package crzerolog provides zerolog-based logging for Cloud Run
+// Package crzerolog provides a zerolog-based logger for Cloud Run.
 package crzerolog
 
 import (
