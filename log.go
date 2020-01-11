@@ -1,3 +1,4 @@
+// Package crzerolog provides zerolog-based logging for Cloud Run
 package crzerolog
 
 import (
@@ -5,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"runtime"
 	"strings"
@@ -20,7 +22,7 @@ var (
 	projectID          string
 	sourceLocationHook = &callerHook{}
 	// TODO: test
-	traceContextRegExp = regexp.MustCompile(`([0-9a-fA-F]+)(/(\d+))?(?:;o=[01])?`)
+	traceHeaderRegExp = regexp.MustCompile(`([0-9a-fA-F]+)(?:/(\d+))?(?:;o=[01])?`)
 )
 
 func init() {
@@ -51,13 +53,17 @@ func init() {
 		}
 	}
 
-	// Fetch Project ID in initialization for better performance,
-	// rather than fetching it in every request.
-	id, err := fetchProjectID()
-	if err != nil {
-		log.Fatalf("Failed to fetch mandatory project ID: %v", err)
+	if isCloudRun() || isAppEngineSecond() {
+		// For performance, fetching Project ID here only once,
+		// rather than fetching it in every request.
+		id, err := fetchProjectIDFromMetadata()
+		if err != nil {
+			log.Fatalf("Failed to fetch mandatory project ID: %v", err)
+		}
+		projectID = id
+	} else {
+		projectID = fetchProjectIDFromEnv()
 	}
-	projectID = id
 }
 
 // callerHook implements zerolog.Hook interface.
@@ -78,35 +84,29 @@ func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 
 func HandleWithLogger(rootLogger *zerolog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		matched := traceContextRegExp.FindStringSubmatch(r.Header.Get("X-Cloud-Trace-Context"))
-		if len(matched) < 3 {
-		}
-		traceID := matched[1]
-		if traceID == "" {
-		}
-		spanID := matched[2]
-		if spanID == "" {
-		}
-		// traceID := strings.Split(r.Header.Get("X-Cloud-Trace-Context"), "/")[0]
-		// if traceID == "" {
-		// r = r.WithContext(l.WithContext(r.Context()))
-		// next.ServeHTTP(w, r)
-		// return
-		// }
+		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 
+		traceContext := traceHeaderRegExp.FindStringSubmatch(r.Header.Get("X-Cloud-Trace-Context"))
+		if len(traceContext) < 3 {
+			r = r.WithContext(l.WithContext(r.Context()))
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		traceID := traceContext[1]
+		spanID := traceContext[2]
 		trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
-		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 		l.UpdateContext(func(c zerolog.Context) zerolog.Context {
-			return c.Str("logging.googleapis.com/trace", trace)
-			return c.Str("logging.googleapis.com/spanId", spanID)
+			return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID)
 		})
+
 		r = r.WithContext(l.WithContext(r.Context()))
 		next.ServeHTTP(w, r)
 	})
 }
 
-func fetchProjectID() (string, error) {
+func fetchProjectIDFromMetadata() (string, error) {
 	req, err := http.NewRequest("GET",
 		"http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
 	if err != nil {
@@ -125,4 +125,8 @@ func fetchProjectID() (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+func fetchProjectIDFromEnv() string {
+	return os.Getenv("GOOGLE_CLOUD_PROJECT")
 }
