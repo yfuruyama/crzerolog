@@ -4,6 +4,8 @@ crzerolog
 
 A zerolog-based logging library for Cloud Run.
 
+![screenshot](screenshot.png)
+
 ## Features
 
 - Supports all of [rs/zerolog](https://github.com/rs/zerolog) APIs for structured logging
