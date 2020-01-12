@@ -58,10 +58,10 @@ func main() {
 
 After running above code on your Cloud Run service, you can find following logs in Stackdriver Logging.
 
-**Request Log**
+### Request Log
 ![request log](img/request_log.png)
 
-**Container Logs**
+### Container Logs
 As well as request log, container log is also printed out. Note that some Stackdriver fields are automatically set, such as `severity`, `sourceLocation`, `spanId`, `timestamp`, `trace`.
 
 ![container log 1](img/container_log_01.png)
