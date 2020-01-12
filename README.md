@@ -19,7 +19,7 @@ go get -u github.com/yfuruyama/crzerolog
 
 ## Example
 
-```
+```go
 package main
 
 import (
