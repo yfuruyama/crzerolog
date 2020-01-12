@@ -21,7 +21,8 @@ var (
 
 	projectID          string
 	sourceLocationHook = &callerHook{}
-	traceHeaderRegExp  = regexp.MustCompile(`^\s*([0-9a-fA-F]+)(?:/(\d+))?(?:;o=[01])?\s*$`)
+	// For trace header, see https://cloud.google.com/trace/docs/troubleshooting#force-trace
+	traceHeaderRegExp = regexp.MustCompile(`^\s*([0-9a-fA-F]+)(?:/(\d+))?(?:;o=[01])?\s*$`)
 )
 
 func init() {
@@ -81,10 +82,10 @@ func InjectLogger(rootLogger *zerolog.Logger) func(http.Handler) http.Handler {
 // ServeHTTP injects zerolog.Logger to the http context and calls the next handler.
 func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	l := m.rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
+	r = r.WithContext(l.WithContext(r.Context()))
 
 	traceID, spanID := traceContextFromHeader(r.Header.Get("X-Cloud-Trace-Context"))
 	if traceID == "" {
-		r = r.WithContext(l.WithContext(r.Context()))
 		m.next.ServeHTTP(w, r)
 		return
 	}
@@ -94,7 +95,6 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID)
 	})
 
-	r = r.WithContext(l.WithContext(r.Context()))
 	m.next.ServeHTTP(w, r)
 }
 
@@ -110,9 +110,10 @@ func (h *callerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 		}
 		line = fmt.Sprintf("%d", lineNum)
 		parts := strings.Split(filePath, "/")
-		file = parts[len(parts)-1] // use short file name
+		file = parts[len(parts)-1]
 	}
-	e.Dict("logging.googleapis.com/sourceLocation", zerolog.Dict().Str("file", file).Str("line", line).Str("function", function))
+	e.Dict("logging.googleapis.com/sourceLocation",
+		zerolog.Dict().Str("file", file).Str("line", line).Str("function", function))
 }
 
 func fetchProjectIDFromMetadata() (string, error) {
