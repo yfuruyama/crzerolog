@@ -4,11 +4,11 @@ crzerolog
 
 A zerolog-based logging library for Cloud Run.
 
-![screenshot](screenshot.png)
+![request log](img/request_log.png)
 
 ## Features
 
-- Auto format with Stackdriver fields such as time, severity, trace, sourceLocation
+- Auto format for Stackdriver fields such as time, severity, trace, sourceLocation
 - Group application logs with the request log
 - Supports all of [rs/zerolog](https://github.com/rs/zerolog) APIs for structured logging
 
@@ -19,8 +19,6 @@ go get -u github.com/yfuruyama/crzerolog
 ```
 
 ## Example
-
-See [GoDoc](https://godoc.org/github.com/yfuruyama/crzerolog) for more details.
 
 ```
 package main
@@ -59,22 +57,44 @@ func main() {
 }
 ```
 
+After running above code on your Cloud Run service, you can find following logs in Stackdriver Logging.
+
+### Request Log
+
+![request log](img/request_log.png)
+
+### Container Log 1
+
+As well as request log, container log is also printed out. Note that some Stackdriver fields are automatically set, such as `severity`, `sourceLocation`, `spanId`, `timestamp`, `trace`.
+
+![container log 1](img/container_log_01.png)
+
+### Container Log 2
+
+If you add additional fields to the log with zerolog APIs, you can find those fields in `jsonPayload`.
+
+![container log 2](img/container_log_02.png)
+
+### Container Log 3
+
+![container log 3](img/container_log_03.png)
+
 ## Level mapping
 
 This library automatically maps [zerolog level](https://godoc.org/github.com/rs/zerolog#Level) to [Stackdriver severity](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity).
 
-Mapping between them is as follows.
+Mapping is as follows.
 
 | zerolog level | Stackdriver severity |
 | --- | --- |
-| `NoLevel` | `DEFAULT` |
-| `TraceLevel` | `DEFAULT` |
-| `DebugLevel` | `DEBUG` |
-| `InfoLevel` | `INFO` |
-| `WarnLevel` | `WARNING` |
-| `ErrorLevel` | `ERROR` |
-| `FatalLevel` | `CRITICAL` |
-| `PanicLevel` | `ALERT` |
+| NoLevel | DEFAULT |
+| TraceLevel | DEFAULT |
+| DebugLevel | DEBUG |
+| InfoLevel | INFO |
+| WarnLevel | WARNING |
+| ErrorLevel | ERROR |
+| FatalLevel | CRITICAL |
+| PanicLevel | ALERT |
 
 ## Supported Platform
 
