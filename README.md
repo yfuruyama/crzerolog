@@ -1,6 +1,6 @@
 crzerolog
 ===
-[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/yfuruyama/crzerolog) [![CircleCI](https://circleci.com/gh/yfuruyama/crzerolog.svg?style=svg)](https://circleci.com/gh/yfuruyama/crzerolog)
+[![godoc](https://godoc.org/github.com/yfuruyama/crzerolog?status.svg)](https://godoc.org/github.com/yfuruyama/crzerolog) [![CircleCI](https://circleci.com/gh/yfuruyama/crzerolog.svg?style=svg)](https://circleci.com/gh/yfuruyama/crzerolog)
 
 A zerolog-based logging library for Cloud Run.
 
@@ -8,9 +8,19 @@ A zerolog-based logging library for Cloud Run.
 
 ## Features
 
+- Auto format with Stackdriver fields such as time, severity, trace, sourceLocation
+- Group application logs with the request log
 - Supports all of [rs/zerolog](https://github.com/rs/zerolog) APIs for structured logging
 
+## Installation
+
+```
+go get -u github.com/yfuruyama/crzerolog
+```
+
 ## Example
+
+See [GoDoc](https://godoc.org/github.com/yfuruyama/crzerolog) for more details.
 
 ```
 package main
@@ -49,7 +59,27 @@ func main() {
 }
 ```
 
+## Level mapping
+
+This library automatically maps [zerolog level](https://godoc.org/github.com/rs/zerolog#Level) to [Stackdriver severity](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity).
+
+Mapping between them is as follows.
+
+| zerolog level | Stackdriver severity |
+| --- | --- |
+| `NoLevel` | `DEFAULT` |
+| `TraceLevel` | `DEFAULT` |
+| `DebugLevel` | `DEBUG` |
+| `InfoLevel` | `INFO` |
+| `WarnLevel` | `WARNING` |
+| `ErrorLevel` | `ERROR` |
+| `FatalLevel` | `CRITICAL` |
+| `PanicLevel` | `ALERT` |
+
 ## Supported Platform
 
 - Cloud Run (fully managed)
 - Google App Engine (2nd-Generation)
+
+## License
+[Apache 2.0](LICENSE).
