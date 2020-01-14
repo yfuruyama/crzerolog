@@ -24,12 +24,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog/log"
 	"github.com/yfuruyama/crzerolog"
 )
 
@@ -38,7 +37,7 @@ func main() {
 	middleware := crzerolog.InjectLogger(&rootLogger)
 
 	http.Handle("/", middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := hlog.FromRequest(r)
+		logger := log.Ctx(r.Context())
 
 		logger.Info().Msg("Hi")
 		logger.Warn().Str("foo", "bar").Msg("This is")
@@ -52,7 +51,7 @@ func main() {
 		port = p
 	}
 	log.Printf("Server listening on port %q", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal().Msg(http.ListenAndServe(":"+port, nil).Error())
 }
 ```
 

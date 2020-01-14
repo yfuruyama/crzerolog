@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog/log"
 )
 
 type logEntry struct {
@@ -46,7 +46,7 @@ func TestServeHTTP(t *testing.T) {
 				return req
 			},
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				logger := hlog.FromRequest(r)
+				logger := log.Ctx(r.Context())
 				logger.Info().Msg("hello")
 			}),
 			want: logEntry{
@@ -72,7 +72,7 @@ func TestServeHTTP(t *testing.T) {
 				return req
 			},
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				logger := hlog.FromRequest(r)
+				logger := log.Ctx(r.Context())
 				logger.Debug().Msg("hello") // debug log is ignored
 				logger.Info().Msg("hello")
 			}),
