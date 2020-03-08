@@ -38,7 +38,7 @@ func main() {
 
 	rootLogger := zerolog.New(os.Stdout)
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(crzerolog.LoggerInterceptor(&rootLogger)),
+		grpc.UnaryInterceptor(crzerolog.InjectLoggerInterceptor(&rootLogger)),
 	)
 	pb.RegisterHelloServer(s, &server{})
 	if err := s.Serve(l); err != nil {

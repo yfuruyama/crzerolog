@@ -13,7 +13,7 @@ type middleware struct {
 	next       http.Handler
 }
 
-// InjectLogger returns an http middleware for injecting zerolog.Logger to the http context.
+// InjectLogger returns an HTTP middleware for injecting zerolog.Logger to the request context.
 func InjectLogger(rootLogger *zerolog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return &middleware{rootLogger, next}

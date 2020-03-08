@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func TestLoggerInterceptor(t *testing.T) {
+func TestInjectLoggerInterceptor(t *testing.T) {
 	tests := []struct {
 		desc    string
 		md metadata.MD
@@ -79,7 +79,7 @@ func TestLoggerInterceptor(t *testing.T) {
 
 		ctx := context.Background()
 		ctx = metadata.NewIncomingContext(ctx, tt.md)
-		interceptor := LoggerInterceptor(&rootLogger)
+		interceptor := InjectLoggerInterceptor(&rootLogger)
 		interceptor(ctx, nil, unaryInfo, tt.handler)
 
 		var got logEntry

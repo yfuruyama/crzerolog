@@ -80,7 +80,7 @@ If you add additional JSON fields to the log with [zerolog](https://godoc.org/gi
 
 This library also supports gRPC application on Cloud Run.
 
-You just need to use `crzerolog.LoggerInterceptor` to set up logging. 
+You just need to use `crzerolog.InjectLoggerInterceptor` to set up logging. 
 
 ```go
 package main
@@ -123,7 +123,7 @@ func main() {
 
 	rootLogger := zerolog.New(os.Stdout)
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(crzerolog.LoggerInterceptor(&rootLogger)),
+		grpc.UnaryInterceptor(crzerolog.InjectLoggerInterceptor(&rootLogger)),
 	)
 	pb.RegisterHelloServer(s, &server{})
 	if err := s.Serve(l); err != nil {

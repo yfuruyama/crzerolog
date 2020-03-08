@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// LoggerInterceptor returns a gRPC unary interceptor for injecting zerolog.Logger to the RPC invocation context.
-func LoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterceptor {
+// InjectLoggerInterceptor returns a gRPC unary interceptor for injecting zerolog.Logger to the RPC invocation context.
+func InjectLoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 		ctx = l.WithContext(ctx)
