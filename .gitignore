@@ -1,2 +1,6 @@
 # executable
-example/example
+example/http/http
+example/grpc/server/server
+example/grpc/client/client
+
+.idea
