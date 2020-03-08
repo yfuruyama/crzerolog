@@ -3,12 +3,13 @@ package crzerolog
 import (
 	"context"
 	"fmt"
+
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
-// TODO: LoggerInterceptor is ...
+// LoggerInterceptor returns a gRPC unary interceptor for injecting zerolog.Logger to the RPC invocation context.
 func LoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)

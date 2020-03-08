@@ -29,7 +29,7 @@ func init() {
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zerolog.LevelFieldName = "severity"
 	zerolog.LevelFieldMarshalFunc = func(l zerolog.Level) string {
-		// mapping to Stackdriver LogSeverity
+		// mapping to Cloud Logging LogSeverity
 		// https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 		switch l {
 		case zerolog.TraceLevel:
@@ -64,38 +64,6 @@ func init() {
 	} else {
 		projectID = fetchProjectIDFromEnv()
 	}
-}
-
-// middleware implements http.Handler interface.
-type middleware struct {
-	rootLogger *zerolog.Logger
-	next       http.Handler
-}
-
-// InjectLogger returns an http middlware for injecting zerolog.Logger to the http context.
-func InjectLogger(rootLogger *zerolog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return &middleware{rootLogger, next}
-	}
-}
-
-// ServeHTTP injects zerolog.Logger to the http context and calls the next handler.
-func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l := m.rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
-	r = r.WithContext(l.WithContext(r.Context()))
-
-	traceID, spanID := traceContextFromHeader(r.Header.Get("X-Cloud-Trace-Context"))
-	if traceID == "" {
-		m.next.ServeHTTP(w, r)
-		return
-	}
-	trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
-
-	l.UpdateContext(func(c zerolog.Context) zerolog.Context {
-		return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID)
-	})
-
-	m.next.ServeHTTP(w, r)
 }
 
 // callerHook implements zerolog.Hook interface.
