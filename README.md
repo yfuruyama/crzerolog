@@ -2,7 +2,7 @@ crzerolog
 ===
 [![godoc](https://godoc.org/github.com/yfuruyama/crzerolog?status.svg)](https://godoc.org/github.com/yfuruyama/crzerolog) [![CircleCI](https://circleci.com/gh/yfuruyama/crzerolog.svg?style=svg)](https://circleci.com/gh/yfuruyama/crzerolog)
 
-A zerolog-based logging library for Cloud Run.
+A [zerolog](https://github.com/rs/zerolog)-based logging library for Cloud Run.
 
 ![request log](img/request_log.png)
 
