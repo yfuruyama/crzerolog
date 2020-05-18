@@ -13,3 +13,6 @@ push:
 
 deploy:
 	gcloud run deploy --image=${IMAGE} --platform=managed --region=us-central1 --project=${PROJECT_ID} --allow-unauthenticated crzerolog-cloudrun-grpc
+
+call:
+	docker run -it --entrypoint=/client ${IMAGE} -server_addr="${ADDR}:443"

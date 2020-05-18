@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/yfuruyama/crzerolog"
 	"net"
 	"os"
+
+	"github.com/yfuruyama/crzerolog"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	pb "github.com/yfuruyama/crzerolog/example/grpc/proto"
 )
@@ -40,6 +42,7 @@ func main() {
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(crzerolog.InjectLoggerInterceptor(&rootLogger)),
 	)
+	reflection.Register(s)
 	pb.RegisterHelloServer(s, &server{})
 	if err := s.Serve(l); err != nil {
 		log.Fatal().Msgf("Failed to serve: %v", err)
