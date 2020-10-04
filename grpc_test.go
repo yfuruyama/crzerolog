@@ -39,7 +39,7 @@ func TestInjectLoggerInterceptor(t *testing.T) {
 					Function: "ignore",
 				},
 				Trace:   "projects/myproject/traces/0123456789abcdef0123456789abcdef",
-				SpanID:  "123",
+				SpanID:  "000000000000007b",
 				Message: "hello",
 			},
 		},

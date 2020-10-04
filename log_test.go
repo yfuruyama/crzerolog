@@ -10,9 +10,9 @@ func TestTraceContextFromHeader(t *testing.T) {
 		wantTraceID string
 		wantSpanID  string
 	}{
-		{"0123456789abcdef0123456789abcdef/123;o=1", "0123456789abcdef0123456789abcdef", "123"},
-		{"0123456789abcdef0123456789abcdef/123;o=0", "0123456789abcdef0123456789abcdef", "123"},
-		{"0123456789abcdef0123456789abcdef/123", "0123456789abcdef0123456789abcdef", "123"},
+		{"0123456789abcdef0123456789abcdef/123;o=1", "0123456789abcdef0123456789abcdef", "000000000000007b"},
+		{"0123456789abcdef0123456789abcdef/123;o=0", "0123456789abcdef0123456789abcdef", "000000000000007b"},
+		{"0123456789abcdef0123456789abcdef/123", "0123456789abcdef0123456789abcdef", "000000000000007b"},
 		{"0123456789abcdef0123456789abcdef", "0123456789abcdef0123456789abcdef", ""},
 		{"0123456789abcdef0123456789abcdef/invalid", "", ""},
 		{"invalid", "", ""},
