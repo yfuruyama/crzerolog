@@ -22,7 +22,7 @@ var (
 	projectID          string
 	sourceLocationHook = &callerHook{}
 	// For trace header, see https://cloud.google.com/trace/docs/troubleshooting#force-trace
-	traceHeaderRegExp = regexp.MustCompile(`^\s*([0-9a-fA-F]+)(?:/(\d+))?(?:;o=([01]))?\s*$`)
+	traceHeaderRegExp = regexp.MustCompile(`^\s*([0-9a-fA-F]+)(?:/(\d+))?(?:;o=[01])?\s*$`)
 )
 
 func init() {
@@ -109,21 +109,10 @@ func fetchProjectIDFromEnv() string {
 	return os.Getenv("GOOGLE_CLOUD_PROJECT")
 }
 
-func traceContextFromHeader(header string) (string, string, bool) {
+func traceContextFromHeader(header string) (string, string) {
 	matched := traceHeaderRegExp.FindStringSubmatch(header)
-	switch len(matched) {
-	case 2:
-		return matched[1], "", false
-	case 3:
-		return matched[1], matched[2], false
-	case 4:
-		traceOption := matched[3]
-		var sampled bool
-		if traceOption == "1" {
-			sampled = true
-		}
-		return matched[1], matched[2], sampled
-	default:
-		return "", "", false
+	if len(matched) < 3 {
+		return "", ""
 	}
+	return matched[1], matched[2]
 }

@@ -25,7 +25,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	l := m.rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
 	r = r.WithContext(l.WithContext(r.Context()))
 
-	traceID, spanID, sampled := traceContextFromHeader(r.Header.Get("X-Cloud-Trace-Context"))
+	traceID, spanID := traceContextFromHeader(r.Header.Get("X-Cloud-Trace-Context"))
 	if traceID == "" {
 		m.next.ServeHTTP(w, r)
 		return
@@ -33,7 +33,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
 	l.UpdateContext(func(c zerolog.Context) zerolog.Context {
-		return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID).Bool("logging.googleapis.com/trace_sampled", sampled)
+		return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID)
 	})
 
 	m.next.ServeHTTP(w, r)
