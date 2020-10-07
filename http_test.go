@@ -18,7 +18,6 @@ type logEntry struct {
 	Severity       string         `json:"severity"`
 	SourceLocation sourceLocation `json:"logging.googleapis.com/sourceLocation"`
 	Trace          string         `json:"logging.googleapis.com/trace"`
-	SpanID         string         `json:"logging.googleapis.com/spanId"`
 	Message        string         `json:"message"`
 }
 
@@ -58,7 +57,6 @@ func TestInjectLogger(t *testing.T) {
 					Function: "ignore",
 				},
 				Trace:   "projects/myproject/traces/0123456789abcdef0123456789abcdef",
-				SpanID:  "000000000000007b",
 				Message: "hello",
 			},
 		},
@@ -85,7 +83,6 @@ func TestInjectLogger(t *testing.T) {
 					Function: "ignore",
 				},
 				Trace:   "",
-				SpanID:  "",
 				Message: "hello",
 			},
 		},

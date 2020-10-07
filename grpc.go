@@ -24,14 +24,14 @@ func InjectLoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterce
 			return handler(ctx, req)
 		}
 
-		traceID, spanID := traceContextFromHeader(values[0])
+		traceID, _ := traceContextFromHeader(values[0])
 		if traceID == "" {
 			return handler(ctx, req)
 		}
 		trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
 		l.UpdateContext(func(c zerolog.Context) zerolog.Context {
-			return c.Str("logging.googleapis.com/trace", trace).Str("logging.googleapis.com/spanId", spanID)
+			return c.Str("logging.googleapis.com/trace", trace)
 		})
 
 		return handler(ctx, req)

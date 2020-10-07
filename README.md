@@ -66,7 +66,7 @@ The request log is automatically written by Cloud Run. The log viewer shows corr
 ![request log](img/request_log.png)
 
 ### Container Logs
-Container logs are written by this library. You can find that some Cloud Logging fields, such as `severity`, `sourceLocation`, `spanId`, `timestamp`, and `trace` are automatically set.
+Container logs are written by this library. You can find that some Cloud Logging fields, such as `severity`, `sourceLocation`, `timestamp`, and `trace` are automatically set.
 
 ![container log 1](img/container_log_01.png)
 
