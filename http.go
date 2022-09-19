@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // middleware implements http.Handler interface.
@@ -22,8 +23,8 @@ func InjectLogger(rootLogger *zerolog.Logger) func(http.Handler) http.Handler {
 
 // ServeHTTP injects zerolog.Logger to the http context and calls the next handler.
 func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l := m.rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
-	r = r.WithContext(l.WithContext(r.Context()))
+	ctx := m.rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook).WithContext(r.Context())
+	r = r.WithContext(ctx)
 
 	traceID, _ := traceContextFromHeader(r.Header.Get("X-Cloud-Trace-Context"))
 	if traceID == "" {
@@ -32,7 +33,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
-	l.UpdateContext(func(c zerolog.Context) zerolog.Context {
+	log.Ctx(ctx).UpdateContext(func(c zerolog.Context) zerolog.Context {
 		return c.Str("logging.googleapis.com/trace", trace)
 	})
 

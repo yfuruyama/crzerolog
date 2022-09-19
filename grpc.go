@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -12,8 +13,7 @@ import (
 // InjectLoggerInterceptor returns a gRPC unary interceptor for injecting zerolog.Logger to the RPC invocation context.
 func InjectLoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		l := rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook)
-		ctx = l.WithContext(ctx)
+		ctx = rootLogger.With().Timestamp().Logger().Hook(sourceLocationHook).WithContext(ctx)
 
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -30,7 +30,7 @@ func InjectLoggerInterceptor(rootLogger *zerolog.Logger) grpc.UnaryServerInterce
 		}
 		trace := fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
 
-		l.UpdateContext(func(c zerolog.Context) zerolog.Context {
+		log.Ctx(ctx).UpdateContext(func(c zerolog.Context) zerolog.Context {
 			return c.Str("logging.googleapis.com/trace", trace)
 		})
 
